@@ -30,28 +30,15 @@ def create_pdf(doctype, name, silent_print_format, doc=None, no_letterhead=0):
 		"print_type": silent_print_format.default_print_type
 	}
 
-def get_pdf_options(silent_print_format):
-	options = {}
-	
-	page_size = silent_print_format.get("page_size") or "A4"
-	
-	if page_size == "Custom":
-		# For custom sizes, use page-width and page-height with units
-		custom_width = silent_print_format.get("custom_width") or "80mm"
-		custom_height = silent_print_format.get("custom_height") or "297mm"
-		
-		# Ensure units are included
-		if not any(unit in str(custom_width) for unit in ["mm", "cm", "in", "px"]):
-			custom_width = f"{custom_width}mm"
-		if not any(unit in str(custom_height) for unit in ["mm", "cm", "in", "px"]):
-			custom_height = f"{custom_height}mm"
-			
-		options["page-width"] = str(custom_width)
-		options["page-height"] = str(custom_height)
-	else:
-		# Use standard page size
-		options["page-size"] = page_size
-	
+def get_pdf_options(silent_print_format):	
+	options = {
+		"page-size": silent_print_format.get("page_size") or "A4"
+	}
+	if silent_print_format.get("page_size") == "Custom":
+		options = {
+			"page-width": silent_print_format.get("custom_width"),
+			"page-height": silent_print_format.get("custom_height")
+		}
 	return options
 
 
@@ -60,7 +47,7 @@ import pdfkit
 import six
 import io
 from bs4 import BeautifulSoup
-from pypdf import PdfReader, PdfWriter
+from PyPDF2 import PdfFileReader, PdfFileWriter
 from frappe.utils import scrub_urls
 from frappe.utils.pdf import get_file_data_from_writer, read_options_from_html, get_wkhtmltopdf_version
 
@@ -84,17 +71,17 @@ def get_pdf(html, options=None, output=None):
 		# Set filename property to false, so no file is actually created
 		filedata = pdfkit.from_string(html, False, options=options or {})
 
-		# https://pythonhosted.org/PyPDF2/PdfReader.html
-		# create in-memory binary streams from filedata and create a PdfReader object
-		reader = PdfReader(io.BytesIO(filedata))
+		# https://pythonhosted.org/PyPDF2/PdfFileReader.html
+		# create in-memory binary streams from filedata and create a PdfFileReader object
+		reader = PdfFileReader(io.BytesIO(filedata))
 	except OSError as e:
 		if any([error in str(e) for error in PDF_CONTENT_ERRORS]):
 			if not filedata:
 				frappe.throw(_("PDF generation failed because of broken image links"))
 
 			# allow pdfs with missing images if file got created
-			if output:  # output is a PdfWriter object
-				output.append_pages_from_reader(reader)
+			if output:  # output is a PdfFileWriter object
+				output.appendPagesFromReader(reader)
 		else:
 			raise
 
@@ -104,11 +91,11 @@ def get_pdf(html, options=None, output=None):
 			password = frappe.safe_encode(password)
 
 	if output:
-		output.append_pages_from_reader(reader)
+		output.appendPagesFromReader(reader)
 		return output
 
-	writer = PdfWriter()
-	writer.append_pages_from_reader(reader)
+	writer = PdfFileWriter()
+	writer.appendPagesFromReader(reader)
 
 	if "password" in options:
 		writer.encrypt(password)
