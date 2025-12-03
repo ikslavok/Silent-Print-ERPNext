@@ -36,18 +36,20 @@ def get_pdf_options(silent_print_format):
 	page_size = silent_print_format.get("page_size") or "A4"
 	
 	if page_size == "Custom":
-		# For custom sizes, use page-width and page-height with units
+		# For custom sizes (thermal printers), set width only
+		# Let height auto-adjust to content to avoid printing blank paper
 		custom_width = silent_print_format.get("custom_width") or "80mm"
-		custom_height = silent_print_format.get("custom_height") or "297mm"
 		
-		# Ensure units are included
+		# Ensure width has units
 		if not any(unit in str(custom_width) for unit in ["mm", "cm", "in", "px"]):
 			custom_width = f"{custom_width}mm"
-		if not any(unit in str(custom_height) for unit in ["mm", "cm", "in", "px"]):
-			custom_height = f"{custom_height}mm"
 			
 		options["page-width"] = str(custom_width)
-		options["page-height"] = str(custom_height)
+		
+		# DO NOT set page-height for thermal printers
+		# This allows the PDF to auto-size based on content
+		# preventing massive amounts of blank paper from printing
+		
 	else:
 		# Use standard page size
 		options["page-size"] = page_size
