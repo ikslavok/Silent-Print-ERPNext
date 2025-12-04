@@ -143,6 +143,15 @@ frappe.silent_print.WebSocketPrinter = function (options) {
     };
 
     this.submit = function (data) {
+        if (!connected) {
+            frappe.msgprint({
+                title: __("Printer Not Connected"),
+                message: __("No se pudo establecer conexión con la impresora. Favor verificar que el <a href="https://github.com/imTigger/webapp-hardware-bridge" target="_blank">WebApp Hardware Bridge</a> esté ejecutándose."),
+                indicator: "red"
+            });
+            return;
+        }
+        
         if (Array.isArray(data)) {
             data.forEach(function (element) {
                 websocket.send(JSON.stringify(element));
