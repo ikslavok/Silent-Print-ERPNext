@@ -12,6 +12,6 @@ app_email = "roquegv@gmail.com"
 app_license = "MIT"
 
 # injected in desk.html
-app_include_js = "assets/silent_print/js/silent_print.js"
+app_include_js = "/assets/silent_print/js/silent_print.js"
 
 page_js = {"point-of-sale" : "public/js/silent_print.js"}
