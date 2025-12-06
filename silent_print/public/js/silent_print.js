@@ -1,36 +1,41 @@
 // How to extend page function: https://discuss.erpnext.com/t/pos-custom-script-in-point-of-sale/29554/15
-frappe.require('assets/js/point-of-sale.min.js', function() {
-    erpnext.PointOfSale.PastOrderSummary.prototype.print_receipt =  function(parent) {
-        const frm = this.events.get_frm();
-        var printService = new frappe.silent_print.WebSocketPrinter();
-        frappe.call({
-            method: 'silent_print.utils.print_format.create_pdf',
-            args: {
-                doctype: frm.doc.doctype,
-                name: frm.doc.name,
-                silent_print_format: frm.pos_print_format,
-            },
-            callback: (r) => {
-                if(r.message){
-                    printService.submit({
-                        'type': r.message.print_type,
-                        'url': 'file.pdf',
-                        'file_content': r.message.pdf_base64
-                    });
-                } else {
-                    const frm = this.events.get_frm();
-                    frappe.utils.print(
-                        this.doc.doctype,
-                        this.doc.name,
-                        frm.pos_print_format,
-                        this.doc.letter_head,
-                        this.doc.language || frappe.boot.lang
-                    );
-                }
+// Only load POS functionality if point-of-sale page is accessed
+if (window.location.pathname.includes('/point-of-sale')) {
+    frappe.require('assets/js/point-of-sale.min.js', function() {
+        if (erpnext && erpnext.PointOfSale && erpnext.PointOfSale.PastOrderSummary) {
+            erpnext.PointOfSale.PastOrderSummary.prototype.print_receipt =  function(parent) {
+                const frm = this.events.get_frm();
+                var printService = new frappe.silent_print.WebSocketPrinter();
+                frappe.call({
+                    method: 'silent_print.utils.print_format.create_pdf',
+                    args: {
+                        doctype: frm.doc.doctype,
+                        name: frm.doc.name,
+                        silent_print_format: frm.pos_print_format,
+                    },
+                    callback: (r) => {
+                        if(r.message){
+                            printService.submit({
+                                'type': r.message.print_type,
+                                'url': 'file.pdf',
+                                'file_content': r.message.pdf_base64
+                            });
+                        } else {
+                            const frm = this.events.get_frm();
+                            frappe.utils.print(
+                                this.doc.doctype,
+                                this.doc.name,
+                                frm.pos_print_format,
+                                this.doc.letter_head,
+                                this.doc.language || frappe.boot.lang
+                            );
+                        }
+                    }
+                })
             }
-        })
-    }
-})
+        }
+    });
+}
 
 $(document).on('app_ready', function () {    
 
